@@ -368,21 +368,27 @@ public class MariaDbDriverTest extends BaseTest {
 
     @Test
     public void testWarnings() throws SQLException {
-        Statement st = sharedConnection.createStatement();
+        Connection connection = null;
+        try {
+            connection = setConnection("&jdbcCompliantTruncation=false");
+            Statement st = connection.createStatement();
 
-        /* To throw warnings rather than errors, we need a non-strict sql_mode */
-        st.execute("set sql_mode=''");
-        st.executeUpdate("insert into warnings_test values('123'),('124')");
-        SQLWarning warning = st.getWarnings();
-        assertEquals(warning.getMessage(), "Data truncated for column 'c' at row 1");
-        assertEquals(warning.getSQLState(), "01000");
-        warning = warning.getNextWarning();
-        assertEquals(warning.getMessage(), "Data truncated for column 'c' at row 2");
-        assertEquals(warning.getSQLState(), "01000");
+            /* To throw warnings rather than errors, we need a non-strict sql_mode */
+            st.execute("set sql_mode=''");
+            st.executeUpdate("insert into warnings_test values('123'),('124')");
+            SQLWarning warning = st.getWarnings();
+            assertEquals(warning.getMessage(), "Data truncated for column 'c' at row 1");
+            assertEquals(warning.getSQLState(), "01000");
+            warning = warning.getNextWarning();
+            assertEquals(warning.getMessage(), "Data truncated for column 'c' at row 2");
+            assertEquals(warning.getSQLState(), "01000");
 
-        assertEquals(warning.getNextWarning(), null);
-        st.clearWarnings();
-        assertEquals(st.getWarnings(), null);
+            assertEquals(warning.getNextWarning(), null);
+            st.clearWarnings();
+            assertEquals(st.getWarnings(), null);
+        } finally {
+            connection.close();
+        }
     }
 
 
