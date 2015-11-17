@@ -96,6 +96,7 @@ Following options are currently supported.
 |serverTimezone|Defined the server time zone.<br/>to use only if jre server as a different time implementation of the server.<br/>(best to have the same server time zone when possible). <br/>Since 1.1.7*|
 |rewriteBatchedStatements| rewrite batchedStatement to have only one server call.<br/>*Default: false. Since 1.1.8*|
 |useServerPrepStmts| if true, preparedStatement will be prepared on server side. If not, Prepared statements (parameter substitution) is handled by the driver, on the client side.<br/>*Default: true. Since 1.3.0*| 
+|jdbcCompliantTruncation| Truncation error ("Data truncated for column '%' at row %", "Out of range value for column '%' at row %") will be thrown as error, and not as warning.<br/>*Default: true. Since 1.4.0*| 
 
 
 
@@ -109,7 +110,7 @@ Following options are currently supported.
 |failoverLoopRetries|When searching silently for a valid host, maximum number of connection attempts.<br/><br/>This differ from "retriesAllDown" parameter, because this silent search is for example used after a disconnection of a slave connection when using the master connection<br/><br/>Default: 120.<br/><br/>since 1.2.0|
 |validConnectionTimeout|With multiple hosts, after this time in seconds has elapsed it’s verified that the connections haven’t been lost.<br/><br/>When 0, no verification will be done. <br/><br/>Default:120 seconds<br/><br/>since 1.2.0|
 |loadBalanceBlacklistTimeout|When a connection fails, this host will be blacklisted during the "loadBalanceBlacklistTimeout" amount of time.<br/><br/>When connecting to a host, the driver will try to connect to a host in the list of not blacklisted hosts and after that only on blacklisted ones if none has been found before that.<br/><br/>This blacklist is shared inside the classloader.<br/><br/>Default: 50 seconds.<br/><br/>since 1.2.0|
-|assureReadOnly|If true, in high availability, and switching to a read-only host, assure that this host is in read-only mode by setting session read-only.<br/>Default to false.<br/>*Default: 50 seconds. Since 1.3.0*|
+|assureReadOnly|If true, in high availability, and switching to a read-only host, assure that this host is in read-only mode by setting session read-only.<br/>alias "readOnlyPropagatesToServer" worked to for compatibility<br/>Default to false.<br/>*Default: 50 seconds. Since 1.3.0*|
 <br/>
 
 ## JDBC API Implementation Notes

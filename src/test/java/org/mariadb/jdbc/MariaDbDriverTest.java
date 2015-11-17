@@ -31,6 +31,7 @@ public class MariaDbDriverTest extends BaseTest {
         createTable("tdouble", "d double");
         createTable("biginttest", "i1 bigint, i2 bigint unsigned");
         createTable("warnings_test", "c char(2)");
+        createTable("warnings_trunk_test", "c char(2), d BIT(1)");
         createTable("t_update_count", "flag int, k varchar(10),name varchar(10)");
         createTable("updatable", "i int primary key, a varchar(10)");
     }
@@ -382,6 +383,48 @@ public class MariaDbDriverTest extends BaseTest {
         assertEquals(warning.getNextWarning(), null);
         st.clearWarnings();
         assertEquals(st.getWarnings(), null);
+    }
+
+
+    @Test
+    public void testTruncationException() throws SQLException {
+        String errorMessage = "Data truncated for column 'c' at row 1";
+        String sql = "insert into warnings_trunk_test values('123', 1)";
+        testTruncationException(sql, "01000", errorMessage, true);
+        testTruncationException(sql, null, null, false);
+    }
+
+    @Test
+    public void testTruncationRangeException() throws SQLException {
+        String errorMessage = "Out of range value for column 'd' at row 1";
+        String sql = "insert into warnings_trunk_test values('12', 128)";
+        testTruncationException(sql, "01000", errorMessage, true);
+        testTruncationException(sql, null, null, false);
+    }
+
+    public void testTruncationException(String sql, String sqlState, String errorMessage, boolean truncation) throws SQLException {
+        Connection connection = null;
+        try {
+            connection = setConnection("&jdbcCompliantTruncation="+truncation);
+            Statement st = connection.createStatement();
+            st.execute("set sql_mode=''"); /* To throw warnings rather than errors, we need a non-strict sql_mode */
+            st.executeUpdate(sql);
+            if (truncation) {
+                fail("Must have thown a SQLException");
+            }
+        } catch (SQLException e) {
+            if (!truncation) {
+                fail("must not have thrown error");
+            }
+            if (!errorMessage.equals(e.getMessage())) {
+                fail("Wrong truncation message");
+            }
+            if (!sqlState.equals(e.getSQLState())) {
+                fail("Wrong truncation code");
+            }
+        } finally {
+            connection.close();
+        }
     }
 
     @Test

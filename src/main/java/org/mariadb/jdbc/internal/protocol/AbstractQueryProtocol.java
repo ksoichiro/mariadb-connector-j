@@ -28,7 +28,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.sql.Connection;
+import java.sql.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -474,6 +474,7 @@ public class AbstractQueryProtocol extends AbstractConnectProtocol implements Pr
             case ERROR:
                 this.moreResults = false;
                 this.hasWarnings = false;
+                throwTruncationExceptionIfNeed();
                 ErrorPacket ep = (ErrorPacket) resultPacket;
                 throw new QueryException(ep.getMessage(), ep.getErrorNumber(), ep.getSqlState());
 
@@ -482,6 +483,7 @@ public class AbstractQueryProtocol extends AbstractConnectProtocol implements Pr
                 serverStatus = okpacket.getServerStatus();
                 this.moreResults = ((serverStatus & ServerStatus.MORE_RESULTS_EXISTS) != 0);
                 this.hasWarnings = (okpacket.getWarnings() > 0);
+                throwTruncationExceptionIfNeed();
                 final AbstractQueryResult updateResult = new UpdateResult(okpacket.getAffectedRows(),
                         okpacket.getWarnings(),
                         okpacket.getMessage(),
@@ -493,16 +495,26 @@ public class AbstractQueryProtocol extends AbstractConnectProtocol implements Pr
                 try {
                     return this.createQueryResult(resultSetPacket, streaming, binaryProtocol);
                 } catch (IOException e) {
-
-                    throw new QueryException("Could not read result set: " + e.getMessage(),
-                            -1,
-                            ExceptionMapper.SqlStates.CONNECTION_EXCEPTION.getSqlState(),
-                            e);
+                    throw new QueryException("Could not read result set: " + e.getMessage(), -1,
+                            ExceptionMapper.SqlStates.CONNECTION_EXCEPTION.getSqlState(), e);
                 }
             default:
                 throw new QueryException("Could not parse result", (short) -1, ExceptionMapper.SqlStates.INTERRUPTED_EXCEPTION.getSqlState());
         }
 
+    }
+    private void throwTruncationExceptionIfNeed() throws QueryException {
+        if (getOptions().jdbcCompliantTruncation && this.hasWarnings) {
+            try {
+                SQLWarning warning = getTruncationWarnings();
+                if (warning != null) {
+                    throw new QueryException(warning.getMessage(), warning.getErrorCode(), warning.getSQLState(), warning);
+                }
+            } catch (IOException io) {
+                throw new QueryException("Could not read result set: " + io.getMessage(), -1,
+                        ExceptionMapper.SqlStates.CONNECTION_EXCEPTION.getSqlState(), io);
+            }
+        }
     }
 
 
@@ -770,5 +782,22 @@ public class AbstractQueryProtocol extends AbstractConnectProtocol implements Pr
         return prepareStatementCache;
     }
 
+    public SQLWarning getTruncationWarnings() throws IOException, QueryException {
+        if (!hasWarnings) {
+            return null;
+        }
 
+        CachedSelectResult resultSet = (CachedSelectResult) executeQuery(new MariaDbQuery("show warnings"));
+        // returned result set has 'level', 'code' and 'message' columns, in this order.
+        while (resultSet.next()) {
+            int code = resultSet.getValueObject(1).getInt();
+            if (code == 1264            // Out of range value for column
+                    || code == 1265     // Data truncated for column
+                    || code == 1406) {  // Data too long for column
+                String message = resultSet.getValueObject(2).getString();
+                return new SQLWarning(message, ExceptionMapper.mapCodeToSqlState(code), code);
+            }
+        }
+        return null;
+    }
 }

@@ -727,6 +727,7 @@ public final class MariaDbConnection implements Connection {
         if (warningsCleared || isClosed() || !protocol.hasWarnings()) {
             return null;
         }
+
         Statement st = null;
         ResultSet rs = null;
         SQLWarning last = null;
