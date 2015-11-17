@@ -195,11 +195,13 @@ public class BaseReplication extends BaseMultiHostTest {
     @Test
     public void randomConnection() throws Throwable {
         Connection connection = null;
+
         Map<String, MutableInt> connectionMap = new HashMap<>();
         int masterId = -1;
         for (int i = 0; i < 20; i++) {
             try {
                 connection = getNewConnection(false);
+                assureBlackList(connection);
                 int serverId = getServerId(connection);
                 log.trace("master server found " + serverId);
                 if (i > 0) {
