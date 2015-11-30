@@ -143,7 +143,7 @@ public class UrlParser {
             } else {
                 if (url.startsWith("jdbc:mariadb:")) {
                     UrlParser urlParser = new UrlParser();
-                    parseInternal(urlParser, "jdbc:mysql:" + url.substring(12), prop);
+                    parseInternal(urlParser, "jdbc:mysql:" + url.substring("jdbc:mariadb:".length()), prop);
                     return urlParser;
                 }
             }

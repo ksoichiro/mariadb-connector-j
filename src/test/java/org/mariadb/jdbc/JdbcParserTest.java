@@ -21,6 +21,19 @@ public class JdbcParserTest {
     }
 
     @Test
+    public void testMariaAliasWithFailover() throws Throwable {
+        UrlParser jdbc = UrlParser.parse("jdbc:mariadb:failover://master1,master2,master3/test");
+        Assert.assertEquals(HaMode.FAILOVER, jdbc.getHaMode());
+        Assert.assertEquals(3, jdbc.getHostAddresses().size());
+        Assert.assertEquals(new HostAddress("master1", 3306), jdbc.getHostAddresses().get(0));
+        Assert.assertEquals(new HostAddress("master2", 3306), jdbc.getHostAddresses().get(1));
+        Assert.assertEquals(new HostAddress("master3", 3306), jdbc.getHostAddresses().get(2));
+        Assert.assertEquals("master", jdbc.getHostAddresses().get(0).type);
+        Assert.assertEquals("master", jdbc.getHostAddresses().get(1).type);
+        Assert.assertEquals("master", jdbc.getHostAddresses().get(2).type);
+    }
+
+    @Test
     public void testSslAlias() throws Throwable {
         UrlParser jdbc = UrlParser.parse("jdbc:mariadb://localhost/test?useSSL=true");
         Assert.assertTrue(jdbc.getOptions().useSsl);
