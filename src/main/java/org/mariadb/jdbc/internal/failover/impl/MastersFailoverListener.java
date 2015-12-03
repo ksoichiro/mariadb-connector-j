@@ -282,14 +282,13 @@ public class MastersFailoverListener extends AbstractMastersListener {
      *
      * @param queryException internal error
      * @param reconnected    connection status
+     * @param failedHostAddress host address that caused communications link failure
      * @throws QueryException error with failover information
      */
     @Override
-    public void throwFailoverMessage(QueryException queryException, boolean reconnected) throws QueryException {
-        HostAddress hostAddress = (currentProtocol != null) ? currentProtocol.getHostAddress() : null;
-
-        String firstPart = "Communications link failure with primary" + ((hostAddress != null) ? " host " + hostAddress.host
-                + ":" + hostAddress.port : "") + ". ";
+    public void throwFailoverMessage(QueryException queryException, boolean reconnected, HostAddress failedHostAddress) throws QueryException {
+        String firstPart = "Communications link failure with primary" + ((failedHostAddress != null) ? " host " + failedHostAddress.host
+                + ":" + failedHostAddress.port : "") + ". ";
         String error = "";
         if (urlParser.getOptions().autoReconnect) {
             if (isMasterHostFail()) {

@@ -338,7 +338,8 @@ public abstract class AbstractMastersListener implements Listener {
 
     public abstract HandleErrorResult primaryFail(Method method, Object[] args) throws Throwable;
 
-    public abstract void throwFailoverMessage(QueryException queryException, boolean reconnected) throws QueryException;
+    public abstract void throwFailoverMessage(QueryException queryException, boolean reconnected,
+                                              HostAddress failedHostAddress) throws QueryException;
 
     public abstract void reconnect() throws QueryException;
 

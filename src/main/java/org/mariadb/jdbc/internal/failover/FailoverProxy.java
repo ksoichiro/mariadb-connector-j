@@ -49,6 +49,8 @@ OF SUCH DAMAGE.
 
 package org.mariadb.jdbc.internal.failover;
 
+import org.mariadb.jdbc.HostAddress;
+import org.mariadb.jdbc.internal.protocol.Protocol;
 import org.mariadb.jdbc.internal.util.ExceptionMapper;
 import org.mariadb.jdbc.internal.util.dao.QueryException;
 
@@ -151,9 +153,11 @@ public class FailoverProxy implements InvocationHandler {
      * @throws Throwable throwable
      */
     private Object handleFailOver(QueryException qe, Method method, Object[] args) throws Throwable {
+        Protocol failedProtocol = listener.getCurrentProtocol();
         HandleErrorResult handleErrorResult = listener.handleFailover(method, args);
         if (handleErrorResult.mustThrowError) {
-            listener.throwFailoverMessage(qe, handleErrorResult.isReconnected);
+            HostAddress failedHostAddress = failedProtocol == null ? null : failedProtocol.getHostAddress();
+            listener.throwFailoverMessage(qe, handleErrorResult.isReconnected, failedHostAddress);
         }
         return handleErrorResult.resultObject;
     }

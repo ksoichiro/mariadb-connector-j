@@ -90,7 +90,8 @@ public interface Listener {
 
     UrlParser getUrlParser();
 
-    void throwFailoverMessage(QueryException queryException, boolean reconnected) throws QueryException;
+    void throwFailoverMessage(QueryException queryException, boolean reconnected, HostAddress failedHostAddress)
+            throws QueryException;
 
     boolean isAutoReconnect();
 
@@ -105,4 +106,6 @@ public interface Listener {
     boolean isReadOnly();
 
     boolean isClosed();
+
+    Protocol getCurrentProtocol();
 }

@@ -104,7 +104,7 @@ public class MastersSlavesListener extends AbstractMastersSlavesListener {
         } catch (QueryException e) {
 //            log.trace("initializeConnection failed", e);
             checkInitialConnection();
-            throwFailoverMessage(e, false);
+            throwFailoverMessage(e, false, null);
         }
     }
 
@@ -388,7 +388,8 @@ public class MastersSlavesListener extends AbstractMastersSlavesListener {
                         }
                     }
                     launchFailLoopIfNotlaunched(false);
-                    throwFailoverMessage(new QueryException("master " + masterProtocol.getHostAddress() + " connection failed"), false);
+                    throwFailoverMessage(new QueryException("master " + masterProtocol.getHostAddress() + " connection failed"), false,
+                            masterProtocol.getHostAddress());
                 }
             } else {
                 if (!currentProtocol.isMasterConnection()) {
@@ -426,7 +427,8 @@ public class MastersSlavesListener extends AbstractMastersSlavesListener {
                         return;
                     }
                     launchFailLoopIfNotlaunched(false);
-                    throwFailoverMessage(new QueryException("master " + masterProtocol.getHostAddress() + " connection failed"), false);
+                    throwFailoverMessage(new QueryException("master " + masterProtocol.getHostAddress() + " connection failed"), false,
+                            masterProtocol.getHostAddress());
                 }
             }
         }
@@ -637,10 +639,11 @@ public class MastersSlavesListener extends AbstractMastersSlavesListener {
      *
      * @param queryException internal error
      * @param reconnected    connection status
+     * @param failedHostAddress host address that caused communications link failure
      * @throws QueryException error with failover information
      */
     @Override
-    public void throwFailoverMessage(QueryException queryException, boolean reconnected) throws QueryException {
+    public void throwFailoverMessage(QueryException queryException, boolean reconnected, HostAddress failedHostAddress) throws QueryException {
         boolean connectionTypeMaster = true;
         HostAddress hostAddress = (masterProtocol != null) ? masterProtocol.getHostAddress() : null;
         if (currentReadOnlyAsked.get()) {
